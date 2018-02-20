@@ -167,11 +167,6 @@ OUT = VarianceMCEM_NOBOOT(fit,datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME =
 
 
 
-
-
-
-
-
 ####################################################
 ####################################################
 ### Fitting Multistate Cure Model to "Complete" Data 
@@ -190,6 +185,7 @@ beta = fit[[1]]
 alpha = fit[[2]]
 beta_save = fit[[3]]
 alpha_save = fit[[4]]
+p_save = fit[[5]]
 
 ### Variance Estimation
 OUT = VarianceEM(fit,iternum=20, bootnum=50, datWIDE, Cov, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')
@@ -318,7 +314,7 @@ legend(x='topright', fill = cbPalette[c(6,7,4,8)], legend = c( 'Intercept', 'X1'
 ###############################################
 
 
-### These are RShiny functions that will plot the predicted state occupancy probabilities based on the multistate cure model fits. These functions assume Weibull baseline hazards. The probabilities can be estimated for a single set of covariates or for several sets of covariates simultaneously. The plots can be downloaded to the working directory
+### These are RShiny functions that will plot the predicted state occupancy probabilities based on the multistate cure model fits. The probabilities can be estimated for a single set of covariates or for several sets of covariates simultaneously. The plots can be downloaded to the working directory
 
 
 ### Weibull Baseline Hazards
