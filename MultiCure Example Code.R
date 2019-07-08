@@ -57,7 +57,7 @@ TransCov = list(Trans13 = VARS, Trans24 = VARS, Trans14 = VARS, Trans34 = VARS, 
 datWIDE = data.frame( Y_R = NONE$Y_R, Y_D = NONE$Y_D, delta_R = NONE$delta_R , delta_D = NONE$delta_D, G = NONE$G)
 
 ### Parameter Estimation
-fit = MultiCure(iternum = 50, datWIDE  = datWIDE, Cov = Cov, trace = T, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')
+fit = MultiCure(iternum = 50, datWIDE  = datWIDE, Cov = Cov, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')
 
 beta = fit[[1]]
 alpha = fit[[2]]
@@ -92,7 +92,7 @@ datWIDE = data.frame( Y_R = COV$Y_R, Y_D = COV$Y_D, delta_R = COV$delta_R , delt
 ### Parameter Estimation (This may take a moment)
 ITERNUM = 200
 fit = MultiCure(iternum = ITERNUM, datWIDE  = datWIDE, Cov = Cov, COVIMPUTEFUNCTION  = COVIMPUTEFUNCTION, COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE, IMPNUM = 10,
-	 trace = T, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')
+	 ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')
 beta_save = fit[[5]]
 alpha_save = fit[[6]]
 scale_save = fit[[7]]
@@ -104,23 +104,10 @@ alpha =  apply(alpha_save[,(ITERNUM-10): ITERNUM], 1, mean)
 scale =  apply(scale_save[,(ITERNUM-10): ITERNUM], 1, mean)
 shape =  apply(shape_save[,(ITERNUM-10): ITERNUM], 1, mean)
 
-### Obtain Proper Imputations (update imputations so they are `proper')
-Proper = ProperDraws_MC(datWIDE,Cov, CovImp = fit[[9]], GImp = fit[[10]], YRImp = fit[[11]], deltaRImp = fit[[12]], 
-		COVIMPUTEFUNCTION = COVIMPUTEFUNCTION,  COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE, 
-		ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')
-CovImp = Proper[[1]]
-GImp = Proper[[2]]
-YRImp = Proper[[3]]
-deltaRImp = Proper[[4]]	
-
-### Variance Estimation Method 1 ### 
-### This performs variance estimation by fitting a multistate cure model to each one of the imputed datasets. For each imputed dataset, we use the standard software estimated SEs from the Logistic regression and proportional hazards model fits. Then, Rubin's rules are applied to obtain the final variance estimator across imputed datasets. This function also provides a different estimate of Theta based on Rubin's rules (based only on the final iteration). We have found the estimate from the mean of the last few iterations (above) may have slightly better coverage unless the number of imputations is large.
-OUT = VarianceMCEM_NOBOOT(fit,datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')		
-
-### Variance Estimation Method 2 ### (This may take a moment)
-### This performs variance estimation by fitting a multistate cure model to each one of the imputed datasets. For each imputed dataset, variances are estimated by fitting the multistate cure model to many bootstrap samples the imputed data. Then Rubin's rules are applied to obtain the final variance estimator across imputed datasets. This function also provides a different estimate of Theta based on Rubin's rules.
-OUT = VarianceMCEM_BOOT(fit,bootnum = 50, datWIDE = datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')		
-
+### Variance Estimation
+OUT = VarianceMCEM(fit,var_method = 'default', datWIDE = datWIDE,  ASSUME = 'SameHazard', 
+          TransCov = TransCov, BASELINE = 'weib', COVIMPUTEFUNCTION = COVIMPUTEFUNCTION_Example, 
+          COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE_Example, POSTITER = 5)	
 
 
 
@@ -139,7 +126,7 @@ datWIDE = data.frame( Y_R = CENS$Y_R, Y_D = CENS$Y_D, delta_R = CENS$delta_R, de
 ### Parameter Estimation (This may take a moment)
 ITERNUM = 200
 fit = MultiCure(iternum = ITERNUM, datWIDE  = datWIDE, Cov = Cov, IMPNUM = 10,
-	 trace = T, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib', 
+	 ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib', 
 	 UNEQUALCENSIMPUTE = UNEQUALCENSIMPUTEWEIBREJECTION)
 
 beta_save = fit[[5]]
@@ -152,19 +139,10 @@ alpha =  apply(alpha_save[,(ITERNUM-10): ITERNUM], 1, mean)
 scale =  apply(scale_save[,(ITERNUM-10): ITERNUM], 1, mean)
 shape =  apply(shape_save[,(ITERNUM-10): ITERNUM], 1, mean)
 
-### Obtain Proper Imputations (update imputations so they are `proper')
-Proper = ProperDraws_MC(datWIDE,Cov, CovImp = fit[[9]], GImp = fit[[10]], YRImp = fit[[11]], deltaRImp = fit[[12]], 
-		ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib', UNEQUALCENSIMPUTE = UNEQUALCENSIMPUTEWEIBREJECTION)
-CovImp = Proper[[1]]
-GImp = Proper[[2]]
-YRImp = Proper[[3]]
-deltaRImp = Proper[[4]]	
-
-### Variance Estimation Method 1 
-###(Estimation without bootstrap.  We can also use 'MultiCure_VAREST_Imputation' to estimate variances via bootstrap)
-OUT = VarianceMCEM_NOBOOT(fit,datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')		
-
-
+### Variance Estimation
+OUT = VarianceMCEM(fit,var_method = 'default', datWIDE = datWIDE,  ASSUME = 'SameHazard', 
+          TransCov = TransCov, BASELINE = 'weib', UNEQUALCENSIMPUTE = UNEQUALCENSIMPUTEWEIBREJECTION, 
+          POSTITER = 5)
 
 
 ####################################################
@@ -180,7 +158,7 @@ TransCov = list(Trans13 = VARS, Trans24 = VARS, Trans14 = VARS, Trans34 = VARS, 
 datWIDE = data.frame( Y_R = NONE$Y_R, Y_D = NONE$Y_D, delta_R = NONE$delta_R , delta_D = NONE$delta_D, G = NONE$G)
 
 ### Parameter Estimation
-fit = MultiCure(iternum = 50, datWIDE  = datWIDE, Cov = Cov, trace = T, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')
+fit = MultiCure(iternum = 50, datWIDE  = datWIDE, Cov = Cov, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')
 beta = fit[[1]]
 alpha = fit[[2]]
 beta_save = fit[[3]]
@@ -189,94 +167,6 @@ p_save = fit[[5]]
 
 ### Variance Estimation
 OUT = VarianceEM(fit,iternum=20, bootnum=50, datWIDE, Cov, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')
-
-
-
-
-
-
-####################################################################
-####################################################################
-### Fitting Multistate Cure Model to Data with Covariate Missingness 
-### with Cox Baseline Hazards
-####################################################################
-####################################################################
-
-
-Cov = data.frame(X1 = COV$X1, X2 = COV$X2)
-VARS = names(Cov)
-TransCov = list(Trans13 = VARS, Trans24 = VARS, Trans14 = VARS, Trans34 = VARS, PNonCure = VARS)
-datWIDE = data.frame( Y_R = COV$Y_R, Y_D = COV$Y_D, delta_R = COV$delta_R , delta_D = COV$delta_D, G = COV$G)
-
-### Parameter Estimation (This may take a moment)
-ITERNUM = 200
-fit = MultiCure(iternum = ITERNUM, datWIDE  = datWIDE, Cov = Cov, COVIMPUTEFUNCTION  = COVIMPUTEFUNCTION, COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE, IMPNUM = 10,trace = T, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')
-beta_save = fit[[3]]
-alpha_save = fit[[4]]
-
-### Theta-Hat can be estimated as the mean of the last few iterations
-beta = apply(beta_save[,(ITERNUM-10): ITERNUM], 1, mean)
-alpha =  apply(alpha_save[,(ITERNUM-10): ITERNUM], 1, mean)
-
-### Obtain Proper Imputations (update imputations so they are `proper')
-Proper = ProperDraws_MC(datWIDE,Cov, CovImp = fit[[5]], GImp = fit[[6]], YRImp = fit[[7]], deltaRImp = fit[[8]], 
-		COVIMPUTEFUNCTION = COVIMPUTEFUNCTION,  COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE, 
-		ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')
-CovImp = Proper[[1]]
-GImp = Proper[[2]]
-YRImp = Proper[[3]]
-deltaRImp = Proper[[4]]	
-
-### Variance Estimation Method 1 ### 
-OUT = VarianceMCEM_NOBOOT(fit,datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')		
-
-### Variance Estimation Method 2 ### (This may take a moment)
-OUT = VarianceMCEM_BOOT(fit,bootnum = 50, datWIDE = datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')		
-
-
-################################################################
-################################################################
-### Fitting Multistate Cure Model to Data with Unequal Censoring 
-### with Cox Baseline Hazards
-################################################################
-################################################################
-
-Cov = data.frame(X1 = CENS$X1, X2 = CENS$X2)
-VARS = names(Cov)
-TransCov = list(Trans13 = VARS, Trans24 = VARS, Trans14 = VARS, Trans34 = VARS, PNonCure = VARS)
-datWIDE = data.frame( Y_R = CENS$Y_R, Y_D = CENS$Y_D, delta_R = CENS$delta_R, delta_D = CENS$delta_D, G = CENS$G)
-
-### Parameter Estimation (This may take a moment)
-ITERNUM = 200
-fit = MultiCure(iternum = ITERNUM, datWIDE  = datWIDE, Cov = Cov, IMPNUM = 10,
-	 trace = T, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox', 
-	 UNEQUALCENSIMPUTE = UNEQUALCENSIMPUTECOXMH)
-
-beta_save = fit[[3]]
-alpha_save = fit[[4]]
-### Theta-Hat can be estimating as the mean of the last few iterations
-beta = apply(beta_save[,(ITERNUM-10): ITERNUM], 1, mean)
-alpha =  apply(alpha_save[,(ITERNUM-10): ITERNUM], 1, mean)
-
-### Obtain Proper Imputations (update imputations so they are `proper')
-Proper = ProperDraws_MC(datWIDE,Cov, CovImp = fit[[5]], GImp = fit[[6]], YRImp = fit[[7]], deltaRImp = fit[[8]], 
-		ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox', UNEQUALCENSIMPUTE = UNEQUALCENSIMPUTECOXMH)
-CovImp = Proper[[1]]
-GImp = Proper[[2]]
-YRImp = Proper[[3]]
-deltaRImp = Proper[[4]]	
-
-### Variance Estimation Method 1 
-###(Estimation without bootstrap.  We can also use 'MultiCure_VAREST_Imputation' to estimate variances via bootstrap)
-OUT = VarianceMCEM_NOBOOT(fit,datWIDE,  CovImp, GImp, YRImp, deltaRImp, ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'cox')		
-
-
-
-
-
-
-
-
 
 
 
@@ -326,11 +216,6 @@ STATEOCCUPANCYWEIB(times = seq(0,max(datWIDE$Y_D),1), TransCov, newCov = data.fr
 Haz = BaselineHazard_NOIMP(datWIDE, Cov, beta, alpha, TransCov, ASSUME = 'SameHazard', p=p_save[,length(p_save[1,])])	
 STATEOCCUPANCYCOX_NOIMP(times = seq(0,max(datWIDE$Y_D),1), TransCov, newCov = data.frame(X1 = c(0,0.5), X2 = c(0,0.5)), 
 	beta, alpha, Haz_13 = Haz[[1]], Haz_24 = Haz[[2]], Haz_14 = Haz[[3]], Haz_34 = Haz[[4]]) 
-
-### Cox Baseline Hazards, MCEM Algorithm (Be Patient, the integrations are tricky)
-haz = Baselinehazard_IMP(datWIDE, CovImp,GImp, YRImp,deltaRImp, beta, alpha, TransCov, ASSUME = 'SameHazard')	
-STATEOCCUPANCYCOX_IMP(times = seq(0,max(datWIDE$Y_D),5), TransCov, newCov = data.frame(X1 = c(0), X2 = c(0)), beta, alpha, 
-		Basehaz13 = haz[[1]], Basehaz24 = haz[[2]], Basehaz14 = haz[[3]], Basehaz34 = haz[[4]]) 
 
 
 
