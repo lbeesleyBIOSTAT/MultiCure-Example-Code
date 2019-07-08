@@ -91,7 +91,7 @@ datWIDE = data.frame( Y_R = COV$Y_R, Y_D = COV$Y_D, delta_R = COV$delta_R , delt
 
 ### Parameter Estimation (This may take a moment)
 ITERNUM = 200
-fit = MultiCure(iternum = ITERNUM, datWIDE  = datWIDE, Cov = Cov, COVIMPUTEFUNCTION  = COVIMPUTEFUNCTION, COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE, IMPNUM = 10,
+fit = MultiCure(iternum = ITERNUM, datWIDE  = datWIDE, Cov = Cov, COVIMPUTEFUNCTION  = COVIMPUTEFUNCTION_Example, COVIMPUTEINITIALIZE = COVIMPUTEINITIALIZE_Example, IMPNUM = 10,
 	 ASSUME = 'SameHazard', TransCov = TransCov, BASELINE = 'weib')
 beta_save = fit[[5]]
 alpha_save = fit[[6]]
